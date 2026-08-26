@@ -3,13 +3,13 @@
 
 #include <stdio.h>
 
-/* ---------- Physical / simulation constants ---------- */
+// Physical / simulation constants
 #define GRAVITY 9.81
 #define PI 3.14159265358979323846
 #define MAX_ESCORT_SHIPS 200   /* upper bound for array sizing */
 #define NUM_ESCORT_TYPES 5
 
-/* ---------- Escort ship types ---------- */
+//Escort ship types
 typedef enum {
     ESCORT_A = 0,  /* 1936A-class Destroyer   */
     ESCORT_B = 1,  /* Gabbiano-class Corvette */
@@ -18,7 +18,7 @@ typedef enum {
     ESCORT_E = 4   /* Japanese Kaibokan       */
 } EscortTypeId;
 
-/* ---------- Battleship types ---------- */
+//Battleship types
 typedef enum {
     BATTLESHIP_U = 0, /* USS Iowa (BB-61)   */
     BATTLESHIP_M = 1, /* MS King George V   */
@@ -96,9 +96,7 @@ typedef struct {
     double killerFlightTime;   /* flight time of the killing shot         */
 } IterationResult;
 
-/* One incoming shell that will deal cumulative damage to B (Part 1-C+).
-   Used so a batch of simultaneous escort hits can be resolved in the
-   correct chronological (arrival-time) order rather than all at once. */
+
 typedef struct {
     int    escortIndex;
     double impactPower;   /* damage this specific shell deals (post any decay) */
@@ -114,16 +112,15 @@ typedef struct {
     EscortShip escorts[MAX_ESCORT_SHIPS];
 } Battlefield;
 
-/* ---------- ship_data.c ---------- */
+// For ship_data.c 
 const EscortTypeInfo    *get_escort_type_info(EscortTypeId t);
 const BattleshipTypeInfo *get_battleship_type_info(BattleshipTypeId t);
 EscortTypeId escort_notation_to_id(char notation);
 BattleshipTypeId battleship_notation_to_id(char notation);
-
-/* ---------- setup.c ---------- */
+// For setup.c lnefelfnewfw
 void setup_battlefield(Battlefield *bf);
 
-/* ---------- physics.c ---------- */
+// For physics.c  huewfnlewkfe
 double deg2rad(double deg);
 double distance_between(double x1, double y1, double x2, double y2);
 double projectile_range(double speed, double angleDeg);

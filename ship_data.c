@@ -3,7 +3,7 @@
 #include "naval_sim.h"
 
 /* Table 1: Escort ship types. Impact power and angle range are fixed
-   by the assignment spec and never change at runtime. */
+   by the assignment spec and never change at runtime. .*/
 static const EscortTypeInfo ESCORT_TABLE[NUM_ESCORT_TYPES] = {
     { 'A', "1936A-class Destroyer",   "SK C/34 naval gun",        0.08, 20.0 },
     { 'B', "Gabbiano-class Corvette", "L/47 dual-purpose gun",    0.06, 30.0 },

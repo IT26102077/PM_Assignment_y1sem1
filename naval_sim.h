@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-/* ---------- Physical / simulation constants ---------- */
+/* ------ Physical / simulation constants ---------- */
 #define GRAVITY 9.81
 #define PI 3.14159265358979323846
 #define MAX_ESCORT_SHIPS 200   /* upper bound for array sizing */

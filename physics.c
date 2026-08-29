@@ -13,7 +13,7 @@ double distance_between(double x1, double y1, double x2, double y2)
     return sqrt(dx * dx + dy * dy);
 }
 
-/* R = u^2 * sin(2*theta) / g   (derived from standard projectile equations) */
+/* R = u^2 * sin(2*theta) / g   (derived from standard projectile equations).. */
 double projectile_range(double speed, double angleDeg)
 {
     double angleRad = deg2rad(angleDeg);

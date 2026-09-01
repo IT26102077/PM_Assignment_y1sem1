@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-/* ------ Physical / simulation constants ---------- */
+/* ---------- Physical / simulation constants ---------- */
 #define GRAVITY 9.81
 #define PI 3.14159265358979323846
 #define MAX_ESCORT_SHIPS 200   /* upper bound for array sizing */
@@ -66,6 +66,7 @@ typedef struct {
     double x, y;
     double vMax;             /* max shell speed (min is always 0)       */
     int    destroyed;
+    double healthFraction;   /* remaining "health" fraction, Part 1-C+  */
 } Battleship;
 
 /* Result of checking whether a shooter can hit a target */
@@ -89,6 +90,15 @@ typedef struct {
     int    killerIndex;        /* index of the E that sank B, or -1       */
     double killerFlightTime;   /* flight time of the killing shot         */
 } IterationResult;
+
+/* One incoming shell that will deal cumulative damage to B (Part 1-C+).
+   Used so a batch of simultaneous escort hits can be resolved in the
+   correct chronological (arrival-time) order rather than all at once. */
+typedef struct {
+    int    escortIndex;
+    double impactPower;   /* damage this specific shell deals (post any decay) */
+    double arrivalTime;   /* absolute time this shell lands                    */
+} DamageEvent;
 
 /* The whole battlefield / scenario state */
 typedef struct {
@@ -124,13 +134,35 @@ HitResult resolve_escort_shot(const Battlefield *bf, const EscortShip *e);
 /* ---------- path.c ---------- */
 void generate_random_path(const Battlefield *bf, Point *path, int k);
 
+/* A "battle iteration" function resolves everything that happens at ONE
+   static battlefield snapshot (a fixed B position). Part 1-B/C and Part 2
+   each define their own such function (single-hit vs cumulative damage,
+   with/without reload delays); this typedef lets the path-walking and
+   static-engagement drivers stay generic and reusable across all of them
+   instead of duplicating the driving loop for every part. */
+typedef IterationResult (*BattleIterationFunc)(Battlefield *bf, FILE *logFile,
+                                                int iterationNum,
+                                                double bThetaMinDeg,
+                                                double bThetaMaxDeg);
+
 /* ---------- simulate.c ---------- */
 void reset_escort_states(Battlefield *bf);
 IterationResult run_battle_iteration(Battlefield *bf, FILE *logFile, int iterationNum,
                                       double bThetaMinDeg, double bThetaMaxDeg);
+IterationResult run_battle_iteration_1c(Battlefield *bf, FILE *logFile, int iterationNum,
+                                         double bThetaMinDeg, double bThetaMaxDeg);
+int  gather_first_volley_damage(Battlefield *bf, DamageEvent *events, FILE *logFile);
+void apply_cumulative_damage(Battlefield *bf, DamageEvent *events, int count,
+                              IterationResult *result, FILE *logFile);
+void run_generic_static(Battlefield *bf, BattleIterationFunc iterFunc,
+                         const char *outFilePrefix);
+void run_generic_path(Battlefield *bf, int k, int t, double jamThetaMinDeg,
+                       const char *outFilePrefix, BattleIterationFunc iterFunc);
 void run_part1a_simulation(Battlefield *bf, const char *outFilePrefix);
 void run_part1b_both_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
                                   const char *outFilePrefix);
+void run_part1c_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
+                             const char *outFilePrefix);
 
 /* ---------- fileio.c ---------- */
 void save_initial_conditions(const Battlefield *bf, const char *filename);

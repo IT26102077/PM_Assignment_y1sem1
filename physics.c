@@ -13,7 +13,7 @@ double distance_between(double x1, double y1, double x2, double y2)
     return sqrt(dx * dx + dy * dy);
 }
 
-/* R = u^2 * sin(2*theta) / g   (derived from standard projectile equations).. */
+/* R = u^2 * sin(2*theta) / g   (derived from standard projectile equations) */
 double projectile_range(double speed, double angleDeg)
 {
     double angleRad = deg2rad(angleDeg);
@@ -64,8 +64,12 @@ void escort_attack_range(const Battlefield *bf, const EscortShip *e,
     if (*rMin > *rMax) { double tmp = *rMin; *rMin = *rMax; *rMax = tmp; }
 }
 
-
- /*
+/* Battleship firing at an escort ship, given an allowed vertical angle
+ * window [thetaMinDeg, thetaMaxDeg]. Fire at whichever angle inside the
+ * window is closest to 45 degrees (minimises the speed needed to reach
+ * any given distance), then solve for the speed required to reach the
+ * target distance exactly.
+ *
  * Part 1-A calls this with [0,90] (B's full, un-jammed range). Part 1-B
  * "Simulation 2" calls it with [thetaMin, 90] once the gun has jammed.
  */

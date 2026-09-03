@@ -1,11 +1,11 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "naval_sim.h"
 
-/* This is the Part 1-A/1-B driver. The full menu system (Start
- * Simulation / View Instructions / Simulation Statistics / Exit)
-  */
+/* NOTE: This is the Part 1-A/1-B driver. The full menu system (Start
+ * Simulation / View Instructions / Simulation Statistics / Exit) will be
+ * added once Part 2 is complete, so all parts can be reached from one menu.
+ */
 
 /* Same EOF-safety rule as setup.c's readers: never spin forever if stdin
    runs out (piped input exhausted, or the user sends Ctrl+D). */
@@ -76,7 +76,12 @@ int main(void)
 
     run_part1b_both_simulations(&bf, k, t, jamThetaMin, "part1b_run1");
 
-    printf("\nDone. Check the part1a_run1_*.txt and part1b_run1_sim1_*.txt / "
-           "part1b_run1_sim2_*.txt files.\n");
+    /* ---- Part 1-C: redo 1-A and 1-B with cumulative impact on B ---- */
+    reset_escort_states(&bf);
+    run_part1c_simulations(&bf, k, t, jamThetaMin, "part1c_run1");
+
+    printf("\nDone. All Part 1 (A/B/C) output files have been written to "
+           "the current folder.\n");
     return 0;
 }
+

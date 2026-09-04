@@ -134,4 +134,3 @@ HitResult resolve_escort_shot(const Battlefield *bf, const EscortShip *e)
     }
     return res;
 }
-

@@ -13,4 +13,3 @@ void generate_random_path(const Battlefield *bf, Point *path, int k)
         path[i].y = ((double)rand() / RAND_MAX) * bf->D;
     }
 }
-

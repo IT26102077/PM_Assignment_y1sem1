@@ -10,6 +10,7 @@ static void write_battleship_block(FILE *f, const Battlefield *bf)
     fprintf(f, "VMin=0.000\n");
     fprintf(f, "VMax=%.3f\n", bf->battleship.vMax);
     fprintf(f, "MaxAttackRange=%.3f\n", battleship_max_range(bf));
+    fprintf(f, "CumulativeImpactFactorRemaining=%.4f\n", bf->battleship.healthFraction);
     fprintf(f, "Destroyed=%s\n\n", bf->battleship.destroyed ? "YES" : "NO");
 }
 

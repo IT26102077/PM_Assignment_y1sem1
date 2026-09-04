@@ -48,6 +48,8 @@ typedef struct {
     double vMax;        /* maximum shell speed for this escort type   */
     double thetaLDeg;   /* minimum vertical firing angle (degrees)    */
     double thetaHDeg;   /* = thetaLDeg + fixed angle range (degrees)  */
+    double reloadDelay; /* T_E^p: seconds between firings, Part 2-B+  */
+    double gamma;       /* impact-power decay rate, Part 2-C          */
 } EscortTypeParams;
 
 /* A single escort ship instance on the battlefield */
@@ -67,6 +69,9 @@ typedef struct {
     double vMax;             /* max shell speed (min is always 0)       */
     int    destroyed;
     double healthFraction;   /* remaining "health" fraction, Part 1-C+  */
+    double reloadDelay;      /* T_B: seconds between firings, Part 2-A+ */
+    double gamma;            /* impact-power decay rate, Part 2-C       */
+    int    totalShotsFired;  /* n in IP_n = IP_0 * e^(-gamma*n), Part 2-C */
 } Battleship;
 
 /* Result of checking whether a shooter can hit a target */
@@ -162,6 +167,14 @@ void run_part1a_simulation(Battlefield *bf, const char *outFilePrefix);
 void run_part1b_both_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
                                   const char *outFilePrefix);
 void run_part1c_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
+                             const char *outFilePrefix);
+double compute_kill_time(Battlefield *bf, DamageEvent *events, int count, int *killerIndexOut);
+
+/* ---------- part2.c ---------- */
+void setup_part2_extra_params(Battlefield *bf);
+IterationResult run_battle_iteration_2a(Battlefield *bf, FILE *logFile, int iterationNum,
+                                         double bThetaMinDeg, double bThetaMaxDeg);
+void run_part2a_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
                              const char *outFilePrefix);
 
 /* ---------- fileio.c ---------- */

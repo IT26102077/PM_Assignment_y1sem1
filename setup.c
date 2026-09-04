@@ -152,6 +152,7 @@ void setup_battlefield(Battlefield *bf)
     bf->battleship.vMax = read_positive_double("Battleship maximum shell speed "
                                                 "(V_max^B): ");
     bf->battleship.destroyed = 0;
+    bf->battleship.healthFraction = 1.0;   /* full health until Part 1-C+ engages it */
 
     setup_escort_type_params(bf);
 

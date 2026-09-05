@@ -117,6 +117,8 @@ static void setup_escort_type_params(Battlefield *bf)
         p->thetaHDeg = p->thetaLDeg + info->angleRangeDeg;
         printf("  -> theta_H for E%c = %.2f degrees\n", info->notation, p->thetaHDeg);
 
+        p->reloadDelay = 0.0; /* set later by setup_part2_extra_params (Part 2-B+) */
+        p->gamma = 0.0;       /* set later by setup_part2_extra_params (Part 2-C)  */
     }
 }
 
@@ -153,6 +155,9 @@ void setup_battlefield(Battlefield *bf)
                                                 "(V_max^B): ");
     bf->battleship.destroyed = 0;
     bf->battleship.healthFraction = 1.0;   /* full health until Part 1-C+ engages it */
+    bf->battleship.reloadDelay = 0.0;      /* set later by setup_part2_extra_params  */
+    bf->battleship.gamma = 0.0;            /* set later by setup_part2_extra_params  */
+    bf->battleship.totalShotsFired = 0;
 
     setup_escort_type_params(bf);
 

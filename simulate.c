@@ -104,6 +104,7 @@ void reset_escort_states(Battlefield *bf)
     }
     bf->battleship.destroyed = 0;
     bf->battleship.healthFraction = 1.0; /* Part 1-C+: cumulative health reset too */
+    bf->battleship.totalShotsFired = 0;  /* Part 2-C: gun wear resets per fresh run */
 }
 
 /* One "Part 1-A style" resolution step at the battleship's CURRENT
@@ -364,6 +365,26 @@ static int compare_damage_events(const void *a, const void *b)
     if (da->arrivalTime < db->arrivalTime) return -1;
     if (da->arrivalTime > db->arrivalTime) return 1;
     return 0;
+}
+
+/* Sorts events by arrival time and reports the arrival time at which B's
+ * cumulative health would first cross zero, WITHOUT actually mutating
+ * bf->battleship.healthFraction - Part 2-A needs to know this ahead of
+ * time to decide how many of B's own sequential shots get to fire before
+ * B goes down, before the real damage is applied via apply_cumulative_damage.
+ * Returns -1.0 if this volley alone would never sink B. */
+double compute_kill_time(Battlefield *bf, DamageEvent *events, int count, int *killerIndexOut)
+{
+    if (count > 1) qsort(events, (size_t)count, sizeof(DamageEvent), compare_damage_events);
+    double health = bf->battleship.healthFraction;
+    for (int i = 0; i < count; i++) {
+        health -= events[i].impactPower;
+        if (health <= 0.0) {
+            if (killerIndexOut) *killerIndexOut = events[i].escortIndex;
+            return events[i].arrivalTime;
+        }
+    }
+    return -1.0;
 }
 
 /* Applies a batch of incoming shells to B's health IN THE ORDER THEY

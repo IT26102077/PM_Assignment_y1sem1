@@ -176,6 +176,10 @@ IterationResult run_battle_iteration_2a(Battlefield *bf, FILE *logFile, int iter
                                          double bThetaMinDeg, double bThetaMaxDeg);
 void run_part2a_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
                              const char *outFilePrefix);
+IterationResult run_battle_iteration_2b(Battlefield *bf, FILE *logFile, int iterationNum,
+                                         double bThetaMinDeg, double bThetaMaxDeg);
+void run_part2b_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
+                             const char *outFilePrefix);
 
 /* ---------- fileio.c ---------- */
 void save_initial_conditions(const Battlefield *bf, const char *filename);

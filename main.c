@@ -84,8 +84,12 @@ int main(void)
     reset_escort_states(&bf);
     setup_part2_extra_params(&bf);
     run_part2a_simulations(&bf, k, t, jamThetaMin, "part2a_run1");
+    reset_escort_states(&bf);
 
-    printf("\nDone. All Part 1 (A/B/C) and Part 2-A output files have been "
-           "written to the current folder.\n");
+    /* ---- Part 2-B: repeated escort fire ---- */
+    run_part2b_simulations(&bf, k, t, jamThetaMin, "part2b_run1");
+
+    printf("\nDone. All Part 1 (A/B/C) and Part 2 (A/B) output files have "
+           "been written to the current folder.\n");
     return 0;
 }

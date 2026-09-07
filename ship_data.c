@@ -47,3 +47,4 @@ BattleshipTypeId battleship_notation_to_id(char notation)
     }
     return BATTLESHIP_U;
 }
+

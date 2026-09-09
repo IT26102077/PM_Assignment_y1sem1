@@ -120,8 +120,13 @@ const BattleshipTypeInfo *get_battleship_type_info(BattleshipTypeId t);
 EscortTypeId escort_notation_to_id(char notation);
 BattleshipTypeId battleship_notation_to_id(char notation);
 
-/* ---------- setup.c ---------- */
-void setup_battlefield(Battlefield *bf);
+/* ---------- setup.c ----------
+ * Split into separate steps so the menu's Setup submenu can match the
+ * assignment spec's structure (Battleship Properties / Escort ship
+ * Settings / Seed value are independently editable). */
+void setup_canvas_and_place_escorts(Battlefield *bf);
+void setup_battleship_properties(Battlefield *bf);
+void setup_escort_settings(Battlefield *bf);
 
 /* ---------- physics.c ---------- */
 double deg2rad(double deg);
@@ -171,7 +176,6 @@ void run_part1c_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg
 double compute_kill_time(Battlefield *bf, DamageEvent *events, int count, int *killerIndexOut);
 
 /* ---------- part2.c ---------- */
-void setup_part2_extra_params(Battlefield *bf);
 IterationResult run_battle_iteration_2a(Battlefield *bf, FILE *logFile, int iterationNum,
                                          double bThetaMinDeg, double bThetaMaxDeg);
 void run_part2a_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
@@ -180,6 +184,16 @@ IterationResult run_battle_iteration_2b(Battlefield *bf, FILE *logFile, int iter
                                          double bThetaMinDeg, double bThetaMaxDeg);
 void run_part2b_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
                              const char *outFilePrefix);
+IterationResult run_battle_iteration_2c(Battlefield *bf, FILE *logFile, int iterationNum,
+                                         double bThetaMinDeg, double bThetaMaxDeg);
+void run_part2c_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
+                             const char *outFilePrefix);
+
+/* ---------- RNG seed control (set by the menu's "Seed value" option
+   before Setup is run; setup.c honours this instead of always using
+   time(NULL) if it has been set) ---------- */
+extern unsigned int g_rngSeed;
+extern int          g_seedIsSet;
 
 /* ---------- fileio.c ---------- */
 void save_initial_conditions(const Battlefield *bf, const char *filename);

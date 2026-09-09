@@ -5,56 +5,11 @@
 
 #define MAX_SHOTS_PER_ESCORT 20 /* safety cap on Part 2-B's repeated-fire loop */
 
-/* ================= Setup ================= */
-
-static void exit_on_eof_p2(int scanResult)
-{
-    if (scanResult == EOF) {
-        fprintf(stderr, "\nInput ended unexpectedly. Exiting.\n");
-        exit(EXIT_FAILURE);
-    }
-}
-
-static double read_positive_double_p2(const char *prompt)
-{
-    double value;
-    int result;
-    do {
-        printf("%s", prompt);
-        while ((result = scanf("%lf", &value)) != 1) {
-            exit_on_eof_p2(result);
-            printf("Please enter a numeric value: ");
-            while (getchar() != '\n');
-        }
-        if (value < 0) printf("Value must be >= 0.\n");
-    } while (value < 0);
-    return value;
-}
-
-/* Gathers T_B, gamma_B, and per-type T_E/gamma_E - all prompted, per your
- * earlier choice to always be asked rather than have these randomised. */
-void setup_part2_extra_params(Battlefield *bf)
-{
-    printf("\n--- Part 2 setup: reload delays and impact-power decay ---\n");
-    bf->battleship.reloadDelay = read_positive_double_p2(
-        "Battleship reload delay T_B (seconds between shots): ");
-    bf->battleship.gamma = read_positive_double_p2(
-        "Battleship impact-power decay rate gamma_B (0 = no decay): ");
-
-    for (int i = 0; i < NUM_ESCORT_TYPES; i++) {
-        const EscortTypeInfo *info = get_escort_type_info((EscortTypeId)i);
-        EscortTypeParams *p = &bf->typeParams[i];
-        char buf[128];
-
-        snprintf(buf, sizeof(buf), "E%c reload delay T_E (seconds between shots): ",
-                 info->notation);
-        p->reloadDelay = read_positive_double_p2(buf);
-
-        snprintf(buf, sizeof(buf), "E%c impact-power decay rate gamma (0 = no decay): ",
-                 info->notation);
-        p->gamma = read_positive_double_p2(buf);
-    }
-}
+/* NOTE: Reload delays (T_B, T_E) and gun-wear decay rates (gamma_B,
+ * gamma per escort type) are now gathered in setup.c, as part of
+ * "Battleship Properties" and "Escort ship Settings" respectively -
+ * matching the assignment's Setup submenu structure, which lists
+ * "Gamma values" under both of those items. */
 
 /* ================= Shared: attack-order strategy ================= */
 
@@ -382,4 +337,105 @@ void run_part2b_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg
 
     printf("\n=== Part 2-B: redo of Part 1-B (+ repeated escort fire) ===\n");
     run_generic_path(bf, k, t, jamThetaMinDeg, pathPrefix, run_battle_iteration_2b);
+}
+
+/* ================= Part 2-C =================
+ * Per the spec's own Steps, this reuses PART 1-C's model (simultaneous,
+ * zero-reload fire, one shot per escort - NOT 2-A/2-B's reload timing),
+ * adding gun wear: both sides' impact power decays with shots fired,
+ * IP_n = IP_0 * e^(-gamma*n). For B, n is the TOTAL number of shots fired
+ * across the whole run so far (bf->battleship.totalShotsFired persists
+ * across iterations - gun wear accumulates over the whole campaign, not
+ * just one point on the path). For an escort, n is always 1, since escorts
+ * still only ever fire once, total, under every part of this spec.
+ * Because B's degraded power may no longer one-shot an escort, an escort's
+ * own health is now tracked cumulatively too (impactFactorLeft), and a
+ * damaged survivor can be finished off on a LATER iteration/path point if
+ * it comes within B's range again.
+ */
+IterationResult run_battle_iteration_2c(Battlefield *bf, FILE *logFile, int iterationNum,
+                                         double bThetaMinDeg, double bThetaMaxDeg)
+{
+    IterationResult result = {0, 0, -1, -1.0};
+    if (logFile) {
+        fprintf(logFile, "--- Iteration %d: B at (%.3f,%.3f) [health=%.3f, gammaB=%.4f, "
+                "shotsFired=%d] ---\n", iterationNum, bf->battleship.x, bf->battleship.y,
+                bf->battleship.healthFraction, bf->battleship.gamma,
+                bf->battleship.totalShotsFired);
+    }
+
+    for (int i = 0; i < bf->N; i++) {
+        EscortShip *e = &bf->escorts[i];
+        if (e->destroyed) continue;
+        HitResult r = resolve_battleship_shot_ex(bf, e, bThetaMinDeg, bThetaMaxDeg);
+        if (r.canHit) {
+            double currentIP = 1.0 * exp(-bf->battleship.gamma * bf->battleship.totalShotsFired);
+            bf->battleship.totalShotsFired++;
+            e->impactFactorLeft -= currentIP;
+            if (logFile) {
+                fprintf(logFile, "  B fires shot #%d at E%d, degraded power=%.4f, "
+                        "E health now %.3f\n", bf->battleship.totalShotsFired, e->index,
+                        currentIP, e->impactFactorLeft);
+            }
+            if (e->impactFactorLeft <= 0.0) {
+                e->destroyed = 1;
+                result.escortsHitByB++;
+                if (logFile) fprintf(logFile, "    -> E%d destroyed\n", e->index);
+            } else if (logFile) {
+                fprintf(logFile, "    -> E%d damaged but survives\n", e->index);
+            }
+        }
+    }
+
+    DamageEvent events[MAX_ESCORT_SHIPS];
+    int count = 0;
+    for (int i = 0; i < bf->N; i++) {
+        EscortShip *e = &bf->escorts[i];
+        if (e->hasFired) continue;
+        HitResult r = resolve_escort_shot(bf, e);
+        if (r.canHit) {
+            e->hasFired = 1;
+            const EscortTypeInfo   *info = get_escort_type_info(e->type);
+            const EscortTypeParams *p    = &bf->typeParams[e->type];
+            double degradedIP = info->impactPower * exp(-p->gamma * 1.0); /* n = 1: first, only shot */
+            events[count].escortIndex = e->index;
+            events[count].impactPower = degradedIP;
+            events[count].arrivalTime = r.flightTimeSec;
+            count++;
+            if (logFile) {
+                fprintf(logFile, "  E%d fires at B: base impact=%.3f, gamma=%.4f, "
+                        "degraded impact=%.4f (t=%.4f)\n", e->index, info->impactPower,
+                        p->gamma, degradedIP, r.flightTimeSec);
+            }
+        }
+    }
+    apply_cumulative_damage(bf, events, count, &result, logFile);
+    if (result.battleshipSunk) bf->battleship.destroyed = 1;
+
+    if (logFile) {
+        if (result.battleshipSunk) {
+            fprintf(logFile, "  >>> Battleship SUNK by E%d (t=%.4f) <<<\n\n",
+                    result.killerIndex, result.killerFlightTime);
+        } else {
+            fprintf(logFile, "  Battleship survives this iteration. Escorts destroyed: "
+                    "%d. Remaining B health: %.3f\n\n", result.escortsHitByB,
+                    bf->battleship.healthFraction);
+        }
+    }
+    return result;
+}
+
+void run_part2c_simulations(Battlefield *bf, int k, int t, double jamThetaMinDeg,
+                             const char *outFilePrefix)
+{
+    char staticPrefix[256], pathPrefix[256];
+    snprintf(staticPrefix, sizeof(staticPrefix), "%s_static", outFilePrefix);
+    snprintf(pathPrefix, sizeof(pathPrefix), "%s_path", outFilePrefix);
+
+    printf("\n=== Part 2-C: redo of Part 1-A/1-C (impact-power degradation) ===\n");
+    run_generic_static(bf, run_battle_iteration_2c, staticPrefix);
+    reset_escort_states(bf);
+
+    printf("\n=== Part 2-C: redo of Part 1-B (impact-power degradation) ===\n");
+    run_generic_path(bf, k, t, jamThetaMinDeg, pathPrefix, run_battle_iteration_2c);
 }

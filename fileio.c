@@ -11,6 +11,8 @@ static void write_battleship_block(FILE *f, const Battlefield *bf)
     fprintf(f, "VMax=%.3f\n", bf->battleship.vMax);
     fprintf(f, "MaxAttackRange=%.3f\n", battleship_max_range(bf));
     fprintf(f, "ReloadDelay_TB=%.3f\n", bf->battleship.reloadDelay);
+    fprintf(f, "GunWearGamma=%.4f\n", bf->battleship.gamma);
+    fprintf(f, "TotalShotsFired=%d\n", bf->battleship.totalShotsFired);
     fprintf(f, "CumulativeImpactFactorRemaining=%.4f\n", bf->battleship.healthFraction);
     fprintf(f, "Destroyed=%s\n\n", bf->battleship.destroyed ? "YES" : "NO");
 }
@@ -32,6 +34,7 @@ static void write_escort_block(FILE *f, const Battlefield *bf, const EscortShip 
     fprintf(f, "VMax=%.3f\n", p->vMax);
     fprintf(f, "AttackRange=[%.3f, %.3f]\n", rMin, rMax);
     fprintf(f, "ReloadDelay_TE=%.3f\n", p->reloadDelay);
+    fprintf(f, "GunWearGamma=%.4f\n", p->gamma);
     fprintf(f, "Destroyed=%s\n", e->destroyed ? "YES" : "NO");
     fprintf(f, "ImpactFactorLeft=%.3f\n\n", e->impactFactorLeft);
 }
@@ -84,3 +87,5 @@ void save_final_conditions(const Battlefield *bf, const char *filename,
     fclose(f);
     printf("Final conditions saved to: %s\n", filename);
 }
+
+    
